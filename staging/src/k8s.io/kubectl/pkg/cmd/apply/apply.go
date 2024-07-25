@@ -526,8 +526,26 @@ func (o *ApplyOptions) Run() error {
 	for _, info := range infos {
 		if err := o.applyOneObject(info); err != nil {
 			errs = append(errs, err)
+			continue
+		}
+
+		// Extract and print the namespace
+		namespace := info.Namespace
+		if namespace == "" {
+			namespace = "default"
+		}
+
+		// Create a printer and print the result with namespace
+		printer, err := o.ToPrinter(fmt.Sprintf("created in namespace %s", namespace))
+		if err != nil {
+			errs = append(errs, err)
+			continue
+		}
+		if err := printer.PrintObj(info.Object, o.Out); err != nil {
+			errs = append(errs, err)
 		}
 	}
+
 	// If any errors occurred during apply, then return error (or
 	// aggregate of errors).
 	if len(errs) == 1 {
